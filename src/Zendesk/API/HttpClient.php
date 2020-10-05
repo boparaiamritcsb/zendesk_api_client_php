@@ -443,18 +443,21 @@ class HttpClient
             return $this->sideload;
         }
     }
-
+    
     /**
      * This is a helper method to do a get request.
      *
      * @param       $endpoint
      * @param array $queryParams
      *
+     * @param bool  $raw
+     *
      * @return stdClass | null
+     * @throws ApiResponseException
      * @throws AuthException
-     * @throws ApiResponseException|GuzzleException
+     * @throws GuzzleException
      */
-    public function get($endpoint, $queryParams = [])
+    public function get($endpoint, $queryParams = [], $raw = false)
     {
         $sideloads = $this->getSideload($queryParams);
 
@@ -466,7 +469,8 @@ class HttpClient
         return Http::send(
             $this,
             $endpoint,
-            ['queryParams' => $queryParams]
+            ['queryParams' => $queryParams],
+            $raw
         );
     }
     

@@ -1,5 +1,5 @@
 {
-  "name": "zendesk/zendesk_api_client_php",
+  "name": "boparaiamritcsb/zendesk_api_client_php",
   "description": "PHP Client for Zendesk REST API. See https://developer.zendesk.com/rest_api/docs/core/introduction .",
   "license": "Apache-2.0",
   "homepage": "https://github.com/zendesk/zendesk_api_client_php",

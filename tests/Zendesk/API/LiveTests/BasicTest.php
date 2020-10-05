@@ -70,7 +70,7 @@ abstract class BasicTest extends \PHPUnit_Framework_TestCase
      */
     protected function setUp()
     {
-        $this->client = new HttpClient($this->subdomain, $this->username, $this->scheme, $this->hostname, $this->port);
+        $this->client = new HttpClient($this->subdomain, $this->scheme, $this->hostname, $this->port);
 
         $authOptions['username'] = $this->username;
         if ($this->authStrategy === 'basic') {

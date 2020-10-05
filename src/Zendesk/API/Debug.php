@@ -37,12 +37,10 @@ class Debug
         if (! is_string($lastError)) {
             $lastError = json_encode($lastError);
         }
-        $output = 'LastResponseCode: ' . $this->lastResponseCode
+        return 'LastResponseCode: ' . $this->lastResponseCode
                   . ', LastResponseError: ' . $lastError
                   . ', LastResponseHeaders: ' . $this->lastResponseHeaders
                   . ', LastRequestHeaders: ' . $this->lastRequestHeaders
                   . ', LastRequestBody: ' . $this->lastRequestBody;
-
-        return $output;
     }
 }

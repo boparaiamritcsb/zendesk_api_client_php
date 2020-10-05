@@ -7,8 +7,12 @@ namespace Zendesk\API;
  * spl_autoload_register(function($c){@include 'src/'.preg_replace('#\\\|_(?!.+\\\)#','/',$c).'.php';});
  */
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
+use stdClass;
+use Zendesk\API\Exceptions\ApiResponseException;
 use Zendesk\API\Exceptions\AuthException;
 use Zendesk\API\Middleware\RetryHandler;
 use Zendesk\API\Resources\Chat;
@@ -157,7 +161,7 @@ class HttpClient
     protected $debug;
 
     /**
-     * @var \GuzzleHttp\Client
+     * @var Client
      */
     public $guzzle;
     /**
@@ -184,19 +188,17 @@ class HttpClient
      * @var Talk
      */
     public $talk;
-
+    
     /**
      * @param string $subdomain
-     * @param string $username
      * @param string $scheme
      * @param string $hostname
-     * @param int $port
-     * @param \GuzzleHttp\Client $guzzle
+     * @param int    $port
+     * @param null   $guzzle
      */
 
     public function __construct(
-        $subdomain,
-        $username = '',
+        string $subdomain,
         $scheme = "https",
         $hostname = "zendesk.com",
         $port = 443,
@@ -204,10 +206,10 @@ class HttpClient
     ) {
         if (is_null($guzzle)) {
             $handler = HandlerStack::create();
-            $handler->push(new RetryHandler(['retry_if' => function ($retries, $request, $response, $e) {
+            $handler->push(new RetryHandler(['retry_if' => function ($e) {
                 return $e instanceof RequestException && strpos($e->getMessage(), 'ssl') !== false;
             }]), 'retry_handler');
-            $this->guzzle = new \GuzzleHttp\Client(compact('handler'));
+            $this->guzzle = new Client(compact('handler'));
         } else {
             $this->guzzle = $guzzle;
         }
@@ -232,8 +234,6 @@ class HttpClient
     }
 
     /**
-     * {@inheritdoc}
-     *
      * @return array
      */
     public static function getValidSubResources()
@@ -312,15 +312,15 @@ class HttpClient
     {
         return $this->headers;
     }
-
+    
     /**
      * @param string $key The name of the header to set
      * @param string $value The value to set in the header
+     *
      * @return HttpClient
      * @internal param array $headers
-     *
      */
-    public function setHeader($key, $value)
+    public function setHeader(string $key, string $value)
     {
         $this->headers[$key] = $value;
 
@@ -356,13 +356,13 @@ class HttpClient
     {
         return $this->apiUrl;
     }
-
+    
     /**
      * Sets the api base path
      *
      * @param string $apiBasePath
      */
-    public function setApiBasePath($apiBasePath)
+    public function setApiBasePath(string $apiBasePath)
     {
         $this->apiBasePath = $apiBasePath;
     }
@@ -376,7 +376,7 @@ class HttpClient
     {
         return $this->apiBasePath;
     }
-
+    
     /**
      * Set debug information as an object
      *
@@ -390,7 +390,7 @@ class HttpClient
         $lastRequestHeaders,
         $lastRequestBody,
         $lastResponseCode,
-        $lastResponseHeaders,
+        string $lastResponseHeaders,
         $lastResponseError
     ) {
         $this->debug->lastRequestHeaders  = $lastRequestHeaders;
@@ -450,9 +450,9 @@ class HttpClient
      * @param       $endpoint
      * @param array $queryParams
      *
-     * @return \stdClass | null
-     * @throws \Zendesk\API\Exceptions\AuthException
-     * @throws \Zendesk\API\Exceptions\ApiResponseException
+     * @return stdClass | null
+     * @throws AuthException
+     * @throws ApiResponseException|GuzzleException
      */
     public function get($endpoint, $queryParams = [])
     {
@@ -462,16 +462,14 @@ class HttpClient
             $queryParams['include'] = implode(',', $sideloads);
             unset($queryParams['sideload']);
         }
-
-        $response = Http::send(
+    
+        return Http::send(
             $this,
             $endpoint,
             ['queryParams' => $queryParams]
         );
-
-        return $response;
     }
-
+    
     /**
      * This is a helper method to do a post request.
      *
@@ -479,9 +477,11 @@ class HttpClient
      * @param array $postData
      *
      * @param array $options
-     * @return null|\stdClass
-     * @throws \Zendesk\API\Exceptions\AuthException
-     * @throws \Zendesk\API\Exceptions\ApiResponseException
+     *
+     * @return null|stdClass
+     * @throws ApiResponseException
+     * @throws AuthException
+     * @throws GuzzleException
      */
     public function post($endpoint, $postData = [], $options = [])
     {
@@ -489,54 +489,50 @@ class HttpClient
             'postFields' => $postData,
             'method' => 'POST'
         ]);
-
-        $response = Http::send(
+    
+        return Http::send(
             $this,
             $endpoint,
             $extraOptions
         );
-
-        return $response;
     }
-
+    
     /**
      * This is a helper method to do a put request.
      *
      * @param       $endpoint
      * @param array $putData
      *
-     * @return \stdClass | null
-     * @throws \Zendesk\API\Exceptions\AuthException
-     * @throws \Zendesk\API\Exceptions\ApiResponseException
+     * @return stdClass | null
+     * @throws ApiResponseException
+     * @throws AuthException
+     * @throws GuzzleException
      */
     public function put($endpoint, $putData = [])
     {
-        $response = Http::send(
+        return Http::send(
             $this,
             $endpoint,
             ['postFields' => $putData, 'method' => 'PUT']
         );
-
-        return $response;
     }
-
+    
     /**
      * This is a helper method to do a delete request.
      *
      * @param $endpoint
      *
      * @return null
-     * @throws \Zendesk\API\Exceptions\AuthException
-     * @throws \Zendesk\API\Exceptions\ApiResponseException
+     * @throws ApiResponseException
+     * @throws AuthException
+     * @throws GuzzleException
      */
     public function delete($endpoint)
     {
-        $response = Http::send(
+        return Http::send(
             $this,
             $endpoint,
             ['method' => 'DELETE']
         );
-
-        return $response;
     }
 }

@@ -2,10 +2,13 @@
 
 namespace Zendesk\API;
 
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Message\StreamInterface;
+use stdClass;
 use Zendesk\API\Exceptions\ApiResponseException;
 use Zendesk\API\Exceptions\AuthException;
 
@@ -16,7 +19,7 @@ use Zendesk\API\Exceptions\AuthException;
 class Http
 {
     public static $curl;
-
+    
     /**
      * Use the send method to call every endpoint except for oauth/tokens
      *
@@ -29,13 +32,14 @@ class Http
      *                             string $method "GET", "POST", etc. Default is GET.
      *                             string $contentType Default is "application/json"
      *
-     * @return \stdClass | null The response body, parsed from JSON into an object. Also returns null if something went wrong
+     * @return stdClass | null The response body, parsed from JSON into an object. Also returns null if something went wrong
      * @throws ApiResponseException
      * @throws AuthException
+     * @throws GuzzleException
      */
     public static function send(
         HttpClient $client,
-        $endPoint,
+        string $endPoint,
         $options = []
     ) {
         $options = array_merge(
@@ -66,7 +70,7 @@ class Http
             $request                     = $request->withoutHeader('Content-Type');
             $requestOptions['multipart'] = $options['multipart'];
         } elseif (! empty($options['postFields'])) {
-            $request = $request->withBody(\GuzzleHttp\Psr7\stream_for(json_encode($options['postFields'])));
+            $request = $request->withBody(Utils::streamFor(json_encode($options['postFields'])));
         } elseif (! empty($options['file'])) {
             if ($options['file'] instanceof StreamInterface) {
                 $request = $request->withBody($options['file']);
@@ -97,8 +101,7 @@ class Http
             $client->setDebug(
                 $request->getHeaders(),
                 $request->getBody(),
-                isset($response) ? $response->getStatusCode() : null,
-                isset($response) ? $response->getHeaders() : null,
+                isset($response) ? $response->getStatusCode() : null, (string)isset($response),
                 isset($e) ? $e : null
             );
 

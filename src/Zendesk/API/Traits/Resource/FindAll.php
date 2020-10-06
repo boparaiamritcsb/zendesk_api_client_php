@@ -2,6 +2,9 @@
 
 namespace Zendesk\API\Traits\Resource;
 
+use stdClass;
+use Zendesk\API\Exceptions\ApiResponseException;
+use Zendesk\API\Exceptions\AuthException;
 use Zendesk\API\Exceptions\RouteException;
 
 trait FindAll
@@ -13,11 +16,11 @@ trait FindAll
      *
      * @param string $routeKey
      *
-     * @return \stdClass | null
-     * @throws \Zendesk\API\Exceptions\AuthException
-     * @throws \Zendesk\API\Exceptions\ApiResponseException
+     * @param bool   $raw
+     *
+     * @return stdClass | null
      */
-    public function findAll(array $params = [], $routeKey = __FUNCTION__)
+    public function findAll(array $params = [], $raw = false, $routeKey = __FUNCTION__)
     {
         try {
             $route = $this->getRoute($routeKey, $params);
@@ -32,7 +35,8 @@ trait FindAll
 
         return $this->client->get(
             $route,
-            $params
+            $params,
+            $raw
         );
     }
 }

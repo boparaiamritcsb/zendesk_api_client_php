@@ -2,6 +2,11 @@
 
 namespace Zendesk\API\Resources\Core;
 
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
+use stdClass;
+use Zendesk\API\Exceptions\ApiResponseException;
+use Zendesk\API\Exceptions\AuthException;
 use Zendesk\API\Exceptions\CustomException;
 use Zendesk\API\Exceptions\MissingParametersException;
 use Zendesk\API\Exceptions\ResponseException;
@@ -46,7 +51,7 @@ class Users extends ResourceAbstract
      * @var UserIdentities
      */
     protected $identities;
-
+    
     /**
      * {@inheritdoc}
      */
@@ -87,17 +92,17 @@ class Users extends ResourceAbstract
             'tickets'                   => UserTickets::class,
         ];
     }
-
+    
     /**
      * List all users
      *
      * @param array $params
      *
-     * @throws ResponseException
-     * @throws \Exception
-     * @return \stdClass | null
+     * @param bool  $raw
+     *
+     * @return stdClass | null
      */
-    public function findAll(array $params = [])
+    public function findAll(array $params = [], $raw = false)
     {
         if (isset($params['organization_id'])) {
             $this->endpoint = "organizations/{$params['organization_id']}/users.json";
@@ -107,17 +112,16 @@ class Users extends ResourceAbstract
             $this->endpoint = 'users.json';
         }
 
-        return $this->traitFindAll($params);
+        return $this->traitFindAll($params, $raw);
     }
-
+    
     /**
      * Find users by ids or external_ids
      *
      * @param array $params
      *
-     * @throws ResponseException
-     * @throws \Exception
-     * @return \stdClass | null
+     * @return stdClass | null
+     * @throws Exception
      */
     public function findMany(array $params = [])
     {
@@ -130,7 +134,7 @@ class Users extends ResourceAbstract
                 $ids = $params['external_ids'];
             }
         } else {
-            throw new \Exception('Missing parameters ids or external_ids');
+            throw new Exception('Missing parameters ids or external_ids');
         }
 
         return $this->traitFindMany($ids, [], $key);
@@ -143,8 +147,8 @@ class Users extends ResourceAbstract
      *
      * @throws MissingParametersException
      * @throws ResponseException
-     * @throws \Exception
-     * @return \stdClass | null
+     * @throws Exception
+     * @return stdClass | null
      */
     public function related(array $params = [])
     {
@@ -162,16 +166,17 @@ class Users extends ResourceAbstract
 
         return $response;
     }
-
+    
     /**
      * Merge user (by default yourself) with the specified user
      *
      * @param array $params
      *
+     * @return stdClass | null
+     * @throws ApiResponseException
+     * @throws AuthException
+     * @throws GuzzleException
      * @throws MissingParametersException
-     * @throws ResponseException
-     * @throws \Exception
-     * @return \stdClass | null
      */
     public function merge(array $params = [])
     {
@@ -201,7 +206,7 @@ class Users extends ResourceAbstract
      *
      * @throws MissingParametersException
      * @throws ResponseException
-     * @return \stdClass | null
+     * @return stdClass | null
      */
     public function suspend(array $params = [])
     {
@@ -220,8 +225,8 @@ class Users extends ResourceAbstract
      * @param array $params Accepts `external_id` & `query`
      *
      * @throws ResponseException
-     * @throws \Exception
-     * @return \stdClass | null
+     * @throws Exception
+     * @return stdClass | null
      */
     public function search(array $params)
     {
@@ -234,8 +239,8 @@ class Users extends ResourceAbstract
      * @param array $params
      *
      * @throws ResponseException
-     * @throws \Exception
-     * @return \stdClass | null
+     * @throws Exception
+     * @return stdClass | null
      */
     public function autocomplete(array $params)
     {
@@ -276,8 +281,8 @@ class Users extends ResourceAbstract
      * @throws CustomException
      * @throws MissingParametersException
      * @throws ResponseException
-     * @throws \Exception
-     * @return \stdClass | null
+     * @throws Exception
+     * @return stdClass | null
      */
     public function updateProfileImageFromFile(array $params)
     {
@@ -294,8 +299,8 @@ class Users extends ResourceAbstract
      * @throws CustomException
      * @throws MissingParametersException
      * @throws ResponseException
-     * @throws \Exception
-     * @return \stdClass | null
+     * @throws Exception
+     * @return stdClass | null
      */
     public function updateProfileImageFromUrl(array $params)
     {
@@ -317,15 +322,14 @@ class Users extends ResourceAbstract
 
         return $this->client->put($endpoint, $putData);
     }
-
+    
     /**
      * Show the current user
      *
      * @param array $params
      *
+     * @return stdClass | null
      * @throws MissingParametersException
-     * @throws ResponseException
-     * @return \stdClass | null
      */
     public function me(array $params = [])
     {
@@ -333,16 +337,17 @@ class Users extends ResourceAbstract
 
         return $this->find($params['id']);
     }
-
+    
     /**
      * Sets a user's initial password
      *
      * @param array $params
      *
-     * @throws MissingParametersException
-     * @throws ResponseException
-     * @throws \Exception
      * @return null
+     * @throws MissingParametersException
+     * @throws GuzzleException
+     * @throws ApiResponseException
+     * @throws AuthException
      */
     public function setPassword(array $params)
     {
@@ -363,7 +368,7 @@ class Users extends ResourceAbstract
      *
      * @throws MissingParametersException
      * @throws ResponseException
-     * @throws \Exception
+     * @throws Exception
      * @return null
      */
     public function changePassword(array $params)
@@ -384,7 +389,8 @@ class Users extends ResourceAbstract
      * @param array  $params
      *
      * @param string $routeKey
-     * @return null|\stdClass
+     *
+     * @return null|stdClass
      */
     public function createOrUpdate(array $params, $routeKey = __FUNCTION__)
     {

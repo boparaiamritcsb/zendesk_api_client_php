@@ -191,14 +191,15 @@ class HttpClient
     
     /**
      * @param string $subdomain
+     * @param null   $username
      * @param string $scheme
      * @param string $hostname
      * @param int    $port
      * @param null   $guzzle
      */
-
     public function __construct(
-        string $subdomain,
+        $subdomain,
+        $username = null,
         $scheme = "https",
         $hostname = "zendesk.com",
         $port = 443,

@@ -2,6 +2,8 @@
 
 namespace Zendesk\API\Resources\Core;
 
+use Exception;
+use stdClass;
 use Zendesk\API\Exceptions\CustomException;
 use Zendesk\API\Exceptions\MissingParametersException;
 use Zendesk\API\Resources\ResourceAbstract;
@@ -37,18 +39,18 @@ class TicketComments extends ResourceAbstract
             ]
         );
     }
-
+    
     /**
      * Returns all comments for a particular ticket
      *
      * @param array $queryParams
      *
-     * @throws MissingParametersException
-     * @throws \Exception
+     * @param bool  $raw
      *
-     * @return \stdClass | null
+     * @return stdClass | null
+     * @throws MissingParametersException
      */
-    public function findAll(array $queryParams = [])
+    public function findAll(array $queryParams = [], $raw = false)
     {
         $queryParams = $this->addChainedParametersToParams($queryParams, ['ticket_id' => Tickets::class]);
 
@@ -56,7 +58,7 @@ class TicketComments extends ResourceAbstract
             throw new MissingParametersException(__METHOD__, ['ticket_id']);
         }
 
-        return $this->traitFindAll($queryParams);
+        return $this->traitFindAll($queryParams, $raw);
     }
 
     /**
@@ -65,9 +67,9 @@ class TicketComments extends ResourceAbstract
      * @param array $params
      *
      * @throws MissingParametersException
-     * @throws \Exception
+     * @throws Exception
      *
-     * @return \stdClass | null
+     * @return stdClass | null
      */
     public function makePrivate(array $params = [])
     {
